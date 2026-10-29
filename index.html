@@ -1,0 +1,567 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body>
+<title>Prop Challenge Reality Check</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Drop your MT5, MT4, TradingView or cTrader trade history and see in plain words whether your results look like skill or luck, and how often you would pass a prop-firm challenge. Free, runs in your browser, nothing uploaded.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one narrow column. The drop zone is the one big object; everything else follows from it. */
+:root{
+ --bg:#f3f5f2; --surface:#ffffff; --ink:#14202a; --muted:#56636e; --line:#d3dad6;
+ --accent:#0b6b66; --accent-ink:#ffffff; --accent-soft:#dcefed;
+ --good:#17733f; --warn:#8a5a00; --warn-soft:#fff4dc; --bad:#b1291f;
+ --display:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
+ --body:"Source Sans 3","Segoe UI",system-ui,sans-serif;
+ --mono:"JetBrains Mono",Consolas,ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+ --bg:#0f1518; --surface:#162026; --ink:#e6ecea; --muted:#9aa8ae; --line:#2a373d;
+ --accent:#4fc2b8; --accent-ink:#06211f; --accent-soft:#173a38;
+ --good:#5fd08e; --warn:#f0c060; --warn-soft:#2f2712; --bad:#ff8a7d; color-scheme:dark}}
+:root[data-theme="dark"]{
+ --bg:#0f1518; --surface:#162026; --ink:#e6ecea; --muted:#9aa8ae; --line:#2a373d;
+ --accent:#4fc2b8; --accent-ink:#06211f; --accent-soft:#173a38;
+ --good:#5fd08e; --warn:#f0c060; --warn-soft:#2f2712; --bad:#ff8a7d; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:17px/1.55 var(--body);margin:0}
+.wrap{max-width:720px;margin:0 auto;padding-block:28px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:28px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;line-height:1.15}
+h1{font-size:clamp(30px,6vw,46px);font-weight:800;letter-spacing:-.01em}
+h2{font-size:22px;font-weight:600}
+h3{font-size:18px;font-weight:600}
+p{margin:0}
+section{display:flex;flex-direction:column;gap:12px}
+.eyebrow{font:600 12px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+.lede{font-size:19px;color:var(--muted);max-width:60ch}
+.hero{display:flex;flex-direction:column;gap:14px}
+.cta-row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.btn{font:600 16px/1 var(--body);padding:13px 18px;border-radius:8px;border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink);cursor:pointer;text-decoration:none;display:inline-block}
+.btn.ghost{background:transparent;color:var(--accent)}
+.btn.link{background:none;border:0;padding:4px 0;color:var(--accent);text-decoration:underline;font-weight:600}
+.btn:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible,summary:focus-visible,.chip input:focus-visible+span{outline:3px solid var(--accent);outline-offset:2px}
+.note{font-size:14px;color:var(--muted)}
+.ticket{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:16px}
+.field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.field label,.legend{font-weight:600;font-size:15px}
+input,textarea,select{font:16px var(--body);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px;width:100%}
+textarea{font-family:var(--mono);font-size:14px;min-height:130px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px}
+/* drop zone */
+.drop{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;padding:34px 16px;border:2px dashed var(--accent);border-radius:14px;background:var(--surface);cursor:pointer}
+.drop.over{background:var(--accent-soft);border-style:solid}
+.drop:focus-within{outline:3px solid var(--accent);outline-offset:3px}
+.drop input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer}
+.drop svg{width:44px;height:44px;color:var(--accent)}
+.drop .big{font:800 clamp(22px,5vw,28px)/1.15 var(--display)}
+.drop .pill{font:600 15px/1 var(--body);background:var(--accent);color:var(--accent-ink);padding:12px 18px;border-radius:8px;margin-top:4px}
+.fmts{font:600 13px var(--mono);color:var(--muted);letter-spacing:.02em}
+.safe{display:flex;gap:8px;align-items:flex-start;font-size:15px}
+.safe b{color:var(--good)}
+details{border-top:1px solid var(--line);padding-top:10px}
+details>summary{cursor:pointer;font-weight:600;color:var(--accent);list-style-position:outside}
+details[open]>summary{margin-bottom:10px}
+.how dt{font-weight:600;margin-top:8px}.how dd{margin:2px 0 0 0;color:var(--muted)}
+.how dl{margin:0}
+/* chips */
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{position:relative}
+.chip input{position:absolute;opacity:0;width:1px;height:1px}
+.chip span{display:inline-block;padding:9px 14px;border:1px solid var(--line);border-radius:999px;font:600 15px var(--mono);cursor:pointer;background:var(--bg)}
+.chip input:checked+span{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+/* results */
+.found{font-size:19px}
+.found strong{font-family:var(--mono);font-size:17px}
+.verdict{font:800 clamp(26px,6vw,36px)/1.1 var(--display)}
+.verdict.ok{color:var(--good)}.verdict.mid{color:var(--warn)}.verdict.bad{color:var(--bad)}
+.dots{display:flex;gap:6px;flex-wrap:wrap}
+.dots i{width:22px;height:22px;border-radius:50%;border:2px solid var(--accent);display:block}
+.dots i.on{background:var(--accent)}
+.pass{font-size:19px}
+.out{background:var(--accent-soft);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:10px}
+.out pre{margin:0;white-space:pre-wrap;word-break:break-word;font:13px/1.5 var(--mono);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px;max-height:240px;overflow:auto}
+.addr{font:600 18px var(--mono);user-select:all;word-break:break-all}
+.code{font:800 22px var(--mono);letter-spacing:.06em;white-space:nowrap}
+.steps{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+th,td{border-bottom:1px solid var(--line);padding:8px 6px;text-align:left;vertical-align:top}
+th{font-weight:600;width:55%}
+td{font-family:var(--mono);font-size:15px}
+.warnbox{background:var(--warn-soft);color:var(--ink);border-radius:8px;padding:10px 12px}
+.ok{color:var(--good)}.mid{color:var(--warn)}.bad{color:var(--bad)}
+ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+footer{font-size:13px;color:var(--muted);display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line);padding-top:16px}
+@media (prefers-reduced-motion:no-preference){.btn{transition:transform .12s}.btn:active{transform:translateY(1px)}}
+</style>
+
+<div class="wrap">
+<header class="hero">
+ <span class="eyebrow">Free · for prop-firm traders</span>
+ <h1>Is your edge real, or did you get lucky?</h1>
+ <p class="lede">Drop your trade history file below. In a few seconds you see, in plain words, whether your results look like skill or luck, and how often the same trades would pass a prop-firm challenge.</p>
+</header>
+
+<section id="tool" aria-labelledby="tool-h">
+ <h2 id="tool-h" class="sr" style="position:absolute;left:-9999px">Check your trades</h2>
+ <label class="drop" id="drop" for="file">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V4"/><path d="M7 9l5-5 5 5"/><path d="M4 15v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4"/></svg>
+  <span class="big">Drop your trade history file here</span>
+  <span class="pill">or tap to choose a file</span>
+  <span class="fmts">MT5 · MT4 · TradingView · cTrader · CSV · Excel</span>
+  <input type="file" id="file" accept=".htm,.html,.csv,.txt,.xlsx,text/html,text/csv,text/plain,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
+ </label>
+ <p class="safe"><b aria-hidden="true">&#10003;</b><span>Your file never leaves your device. This page reads it in your browser; nothing is uploaded.</span></p>
+ <div id="msg" aria-live="polite"></div>
+ <div class="cta-row"><button class="btn link" type="button" id="demo">No file handy? See an example first</button></div>
+
+ <details class="how" id="how">
+  <summary>How do I get this file?</summary>
+  <dl>
+   <dt>MT5 (computer)</dt><dd>Toolbox at the bottom, <b>History</b> tab. Right-click, pick a period (e.g. last 3 months), then right-click, <b>Report</b>, save as <b>HTML</b> or <b>Open XML</b>. Drop that file here.</dd>
+   <dt>MT4 (computer)</dt><dd>Terminal, <b>Account History</b> tab. Right-click, <b>All History</b>, then right-click, <b>Save as Detailed Report</b>.</dd>
+   <dt>TradingView</dt><dd>Strategy Tester, <b>List of trades</b>, then the export (download) button, CSV. Note: that is a backtest, which usually looks better than live trading.</dd>
+   <dt>cTrader</dt><dd><b>History</b> tab, then export to CSV or Excel.</dd>
+   <dt>Phone app or prop-firm dashboard</dt><dd>The MT4/MT5 phone apps cannot export history. Use the desktop app, or download your closed trades as CSV/Excel from your broker's or prop firm's dashboard. Any file with one row per closed trade and a <b>Profit</b> or <b>P&amp;L</b> column works.</dd>
+  </dl>
+ </details>
+
+ <details id="manual">
+  <summary>No file? Type your results instead</summary>
+  <div style="display:flex;flex-direction:column;gap:10px">
+   <p class="note">One profit/loss number per trade in account currency (losses negative), oldest first. Commas, spaces or new lines are fine. At least 20 trades.</p>
+   <div class="field"><label for="t">Your trades</label>
+    <textarea id="t" placeholder="120&#10;-80&#10;-80&#10;240&#10;..."></textarea></div>
+   <div class="cta-row"><button class="btn ghost" type="button" id="usenums">Use these numbers</button></div>
+  </div>
+ </details>
+</section>
+
+<section id="confirm" class="ticket" aria-labelledby="cf-h" hidden>
+ <span class="eyebrow" id="cf-src">Step 2 · check</span>
+ <h2 id="cf-h">Is this right?</h2>
+ <p class="found" id="cf-text"></p>
+ <div id="cf-warn"></div>
+ <details id="rules">
+  <summary id="rules-sum">Challenge rules</summary>
+  <div style="display:flex;flex-direction:column;gap:10px">
+   <p class="note">Edit to match your challenge. Account size should be the size of the account these trades were made on, so the percentages line up.</p>
+   <div class="grid">
+    <div class="field"><label for="acc">Account size</label><input id="acc" type="number" value="100000" min="1"></div>
+    <div class="field"><label for="tg">Profit target %</label><input id="tg" type="number" value="8"></div>
+    <div class="field"><label for="dl">Max daily loss %</label><input id="dl" type="number" value="5"></div>
+    <div class="field"><label for="ml">Max total loss %</label><input id="ml" type="number" value="10"></div>
+    <div class="field"><label for="tpd">Trades per day</label><input id="tpd" type="number" value="2" min="1"></div>
+    <div class="field"><label for="days">Time limit (days)</label><input id="days" type="number" value="30" min="1"></div>
+   </div>
+   <p class="note" id="rules-note"></p>
+  </div>
+ </details>
+ <div class="cta-row">
+  <button class="btn" type="button" id="run">Yes, check these trades</button>
+  <button class="btn ghost" type="button" id="again">Use a different file</button>
+ </div>
+</section>
+
+<section id="results" aria-live="polite" hidden></section>
+
+<section id="report" class="ticket" aria-labelledby="rp-h" hidden>
+ <span class="eyebrow">Optional · free this round · 10 spots</span>
+ <h2 id="rp-h">Want a written one-page report?</h2>
+ <p>We go through your trades by hand: luck test, pass rate under your firm's exact rules, and the main reason a challenge would fail. One short step:</p>
+ <fieldset class="field" style="border:0;padding:0;margin:0">
+  <legend class="legend">If the report helps you decide, what would it be worth to you?</legend>
+  <div class="chips" role="radiogroup">
+   <label class="chip"><input type="radio" name="price" value="$0"><span>$0</span></label>
+   <label class="chip"><input type="radio" name="price" value="$10"><span>$10</span></label>
+   <label class="chip"><input type="radio" name="price" value="$20"><span>$20</span></label>
+   <label class="chip"><input type="radio" name="price" value="$40"><span>$40</span></label>
+   <label class="chip"><input type="radio" name="price" value="$90+"><span>$90+</span></label>
+  </div>
+  <span class="note">It stays free either way. Your answer tells us whether to keep building this.</span>
+ </fieldset>
+ <div class="field"><label for="rq-firm">Prop firm and challenge (optional)</label><input id="rq-firm" placeholder="e.g. FTMO 100k Swing"></div>
+ <div class="out">
+  <p>Email <b>the same file</b> to <span class="addr">orfinital@gmail.com</span> with your code <span class="code" id="rq-code">RC-....</span></p>
+  <div class="cta-row">
+   <button class="btn" type="button" id="rq-copy">Copy email text</button>
+   <a class="btn ghost" id="rq-mail" href="mailto:orfinital@gmail.com">Open my email app</a>
+  </div>
+  <p class="note" id="rq-copied" aria-live="polite"></p>
+  <details><summary>Show the email text</summary><pre id="rq-msg"></pre></details>
+ </div>
+ <p class="note">Your file is used for your report only, never shared, and deleted within 30 days. Remove your name and account number first if you prefer.</p>
+</section>
+
+<section aria-labelledby="why-h">
+ <h2 id="why-h">New to this? The 30-second version</h2>
+ <ul>
+  <li><strong>What a prop firm is:</strong> a company (FTMO, FundedNext, The5ers and others) that lets you trade its money and keeps part of the profit. To get the account you first pay for a test, called a <em>challenge</em>, usually $100 to $600.</li>
+  <li><strong>The catch:</strong> the challenge has strict rules, for example reach +8% profit without ever losing more than 5% in one day or 10% in total. Break one rule once and the fee is gone.</li>
+  <li><strong>Why most people fail:</strong> a few good weeks can be pure luck, and even a real edge can hit a losing streak that breaks the daily-loss rule.</li>
+  <li><strong>What this page does:</strong> it takes the trades you already made and answers two questions before you pay: (1) could a coin flip have produced results like yours? (2) if you repeat the same kind of trades, how often would you pass, and which rule would most likely fail you?</li>
+ </ul>
+ <p class="note">Not for you if you have never traded: there is nothing to check yet. This is not financial advice and not a trading signal service.</p>
+</section>
+
+<section aria-labelledby="lim-h">
+ <h2 id="lim-h">What this does and does not tell you</h2>
+ <ul>
+  <li>It measures how reliable your recorded results look. It does not predict markets and does not say you will pass any challenge.</li>
+  <li>The pass rate assumes future trades behave like past ones and are independent. Markets change; streaks and regime shifts are not modelled.</li>
+  <li>Few trades means a wide range. A good-looking result on 30 trades is often indistinguishable from luck.</li>
+ </ul>
+</section>
+
+<footer>
+ <p><strong>Disclaimer.</strong> For education and information only. Not investment advice, a recommendation, or an offer to trade any instrument, and no promise of profit. Trading leveraged products carries a high risk of loss. Results are statistical estimates based only on the data you provide and may be wrong. Orfinity does not manage money, hold client funds, or trade on your behalf.</p>
+ <p>Contact: <span class="addr" style="font-size:14px">orfinital@gmail.com</span> · <a href="privacy.html">Privacy policy</a></p>
+</footer>
+</div>
+
+<script>
+(function(){
+var $=function(id){return document.getElementById(id)};
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+
+/* ---------- number and date parsing ---------- */
+function num(v){
+ if(typeof v==='number')return v;
+ if(v===null||v===undefined)return NaN;
+ var s=String(v).replace(/[\s  ]/g,'').replace(/[−–]/g,'-');
+ var neg=false;if(/^\(.*\)$/.test(s)){neg=true;s=s.slice(1,-1)}
+ s=s.replace(/[^0-9.,+\-]/g,'');
+ if(!/\d/.test(s))return NaN;
+ if(s.indexOf(',')>=0&&s.indexOf('.')>=0){
+  if(s.lastIndexOf(',')>s.lastIndexOf('.'))s=s.replace(/\./g,'').replace(',','.');else s=s.replace(/,/g,'')
+ }else if(s.indexOf(',')>=0){
+  s=/^[+\-]?\d{1,3}(,\d{3})+$/.test(s)?s.replace(/,/g,''):s.replace(',','.')
+ }
+ if(!/^[+\-]?(\d+\.?\d*|\.\d+)$/.test(s))return NaN;
+ var x=parseFloat(s);return neg?-x:x;
+}
+var RX_YMD=/(\d{4})[.\-\/](\d{1,2})[.\-\/](\d{1,2})(?:[ T,]+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/;
+var RX_DMY=/(\d{1,2})[.\-\/](\d{1,2})[.\-\/](\d{4})(?:[ T,]+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/;
+function parseDates(strs){
+ // decide day-first vs month-first once per file
+ var dayFirst=true,seen=false;
+ strs.forEach(function(s){var m=s&&!RX_YMD.test(s)&&RX_DMY.exec(s);if(m){if(+m[1]>12){dayFirst=true;seen=true}else if(+m[2]>12&&!seen){dayFirst=false}}});
+ return strs.map(function(s){
+  if(!s)return null;var m=RX_YMD.exec(s),y,mo,d;
+  if(m){y=+m[1];mo=+m[2];d=+m[3]}else{m=RX_DMY.exec(s);if(!m)return null;y=+m[3];mo=dayFirst?+m[2]:+m[1];d=dayFirst?+m[1]:+m[2]}
+  if(mo<1||mo>12||d<1||d>31)return null;
+  return new Date(y,mo-1,d,+(m[4]||0),+(m[5]||0),+(m[6]||0));
+ });
+}
+
+/* ---------- file to rows ---------- */
+function decodeText(buf){
+ var b=new Uint8Array(buf),enc='utf-8';
+ if(b[0]===0xFF&&b[1]===0xFE)enc='utf-16le';
+ else if(b[0]===0xFE&&b[1]===0xFF)enc='utf-16be';
+ else if(b.length>3&&b[1]===0&&b[3]===0)enc='utf-16le';
+ return new TextDecoder(enc).decode(b);
+}
+function clean(s){return String(s==null?'':s).replace(/[  ]/g,' ').replace(/\s+/g,' ').trim()}
+function htmlRows(text){
+ var doc=new DOMParser().parseFromString(text,'text/html'),out=[];
+ var trs=doc.querySelectorAll('tr');
+ for(var i=0;i<trs.length;i++){
+  var row=[],cs=trs[i].children;
+  for(var j=0;j<cs.length;j++){
+   var c=cs[j];if(c.tagName!=='TD'&&c.tagName!=='TH')continue;
+   row.push(clean(c.textContent));
+   var span=Math.min(20,parseInt(c.getAttribute('colspan')||'1',10)||1);
+   for(var k=1;k<span;k++)row.push('');
+  }
+  out.push(row);
+ }
+ return out;
+}
+function csvRows(text){
+ text=text.replace(/^﻿/,'');
+ var lines=text.split(/\r?\n/);
+ if(/^sep=/i.test(lines[0]||''))text=lines.slice(1).join('\n');
+ var first=(text.split(/\r?\n/).filter(function(l){return l.trim()})[0])||'';
+ var d=[',',';','\t'].map(function(c){return [c,first.split(c).length]}).sort(function(a,b){return b[1]-a[1]})[0][0];
+ var rows=[],row=[],f='',q=false;
+ for(var i=0;i<text.length;i++){
+  var ch=text[i];
+  if(q){if(ch==='"'){if(text[i+1]==='"'){f+='"';i++}else q=false}else f+=ch}
+  else if(ch==='"')q=true;
+  else if(ch===d){row.push(clean(f));f=''}
+  else if(ch==='\n'||ch==='\r'){if(ch==='\r'&&text[i+1]==='\n')i++;row.push(clean(f));rows.push(row);row=[];f=''}
+  else f+=ch;
+ }
+ if(f||row.length){row.push(clean(f));rows.push(row)}
+ return rows;
+}
+async function inflate(data){
+ var ds=new DecompressionStream('deflate-raw');
+ return new Uint8Array(await new Response(new Blob([data]).stream().pipeThrough(ds)).arrayBuffer());
+}
+async function xlsxRows(buf){
+ if(typeof DecompressionStream==='undefined')throw new Error('xlsx-unsupported');
+ var b=new Uint8Array(buf),v=new DataView(buf),eocd=-1;
+ for(var i=b.length-22;i>=Math.max(0,b.length-70000);i--){if(v.getUint32(i,true)===0x06054b50){eocd=i;break}}
+ if(eocd<0)throw new Error('bad-zip');
+ var cnt=v.getUint16(eocd+10,true),p=v.getUint32(eocd+16,true),files={},td=new TextDecoder();
+ for(var e=0;e<cnt;e++){
+  if(v.getUint32(p,true)!==0x02014b50)break;
+  var meth=v.getUint16(p+10,true),csz=v.getUint32(p+20,true),nl=v.getUint16(p+28,true),xl=v.getUint16(p+30,true),cl=v.getUint16(p+32,true),lo=v.getUint32(p+42,true);
+  files[td.decode(b.subarray(p+46,p+46+nl))]={m:meth,c:csz,o:lo};p+=46+nl+xl+cl;
+ }
+ async function get(name){var f=files[name];if(!f)return null;
+  var s=f.o+30+v.getUint16(f.o+26,true)+v.getUint16(f.o+28,true),d=b.subarray(s,s+f.c);
+  return decodeText((f.m===8?await inflate(d):d.slice()).buffer)}
+ var sheets=Object.keys(files).filter(function(n){return /^xl\/worksheets\/sheet\d+\.xml$/.test(n)}).sort(function(a,c){return parseInt(a.replace(/\D/g,''),10)-parseInt(c.replace(/\D/g,''),10)});
+ if(!sheets.length)throw new Error('bad-zip');
+ var P=new DOMParser(),ss=[],sst=await get('xl/sharedStrings.xml');
+ if(sst){var si=P.parseFromString(sst,'application/xml').getElementsByTagNameNS('*','si');for(var k=0;k<si.length;k++)ss.push(si[k].textContent)}
+ var x=P.parseFromString(await get(sheets[0]),'application/xml'),rs=x.getElementsByTagNameNS('*','row'),out=[];
+ for(var r=0;r<rs.length;r++){
+  var row=[],cs=rs[r].getElementsByTagNameNS('*','c'),idx=0;
+  for(var c=0;c<cs.length;c++){
+   var ref=cs[c].getAttribute('r'),t=cs[c].getAttribute('t'),val;
+   if(ref){var L=ref.replace(/\d+/g,'').toUpperCase();idx=0;for(var q=0;q<L.length;q++)idx=idx*26+(L.charCodeAt(q)-64);idx--}
+   var ve=cs[c].getElementsByTagNameNS('*','v')[0];
+   if(t==='s')val=ve?ss[+ve.textContent]:'';else if(t==='inlineStr')val=cs[c].textContent;else val=ve?ve.textContent:'';
+   while(row.length<idx)row.push('');row[idx]=clean(val);idx++;
+  }
+  out.push(row);
+ }
+ return out;
+}
+
+/* ---------- rows to trades ---------- */
+var BAD_COL=/%|cum|run.?up|draw|balance|gross|max|min|avg|average|total|pips|points|ticks|equity|mae|mfe|largest|consecutive|factor|payoff|expected/i;
+function profitCol(row){
+ var best=-1,score=0;
+ for(var i=0;i<row.length;i++){var h=row[i];if(!h||h.length>40||BAD_COL.test(h))continue;
+  var s=/\bnet\b/i.test(h)?3:(/profit|p\s*&\s*l|p\/l|pnl/i.test(h)?2:0);
+  if(s>score){score=s;best=i}}
+ return best;
+}
+function nonEmpty(r){var n=0;for(var i=0;i<r.length;i++)if(r[i])n++;return n}
+function isHeader(r){return nonEmpty(r)>=Math.min(3,r.length)&&profitCol(r)>=0&&isNaN(num(r[profitCol(r)]))}
+function isMarker(r){var ne=r.filter(Boolean);return ne.length===1&&isNaN(num(ne[0]))&&ne[0].length<40}
+function eff(r){var n=r.length;while(n&&!r[n-1])n--;return n}
+// header and row usually line up; if a row has extra cells (hidden spacers), left columns align left, right columns align right
+function at(row,hdr,i){var a=eff(row),h=eff(hdr);return (row.length===hdr.length||a<=h)?row[i]:(i<h/2?row[i]:row[a-(h-i)])}
+var SKIP=/balance|deposit|withdraw|credit|bonus|transfer|correction|total|summary|closed p\/l|cancel/i;
+function block(rows,h){
+ var hdr=rows[h],pc=profitCol(hdr),isNet=/\bnet\b/i.test(hdr[pc]);
+ function find(rx){for(var i=0;i<hdr.length;i++)if(rx.test(hdr[i]||''))return i;return -1}
+ var typeI=find(/^(type|direction|side|opening direction)$/i),tradeI=find(/^trade\s*(#|no\.?|number)?$/i);
+ var cost=[];if(!isNet)hdr.forEach(function(x,i){if(/^(commission|commissions|swap|swaps|fee|fees|taxes)$/i.test(x||''))cost.push(i)});
+ var dateI=-1;hdr.forEach(function(x,i){if(/clos.*(time|date)/i.test(x||''))dateI=i});
+ if(dateI<0)hdr.forEach(function(x,i){if(/time|date/i.test(x||''))dateI=i});
+ var list=[],byTrade={};
+ for(var r=h+1;r<rows.length;r++){
+  var row=rows[r];if(!nonEmpty(row))continue;
+  if(isMarker(row)||isHeader(row))break;
+  var first=row.filter(Boolean)[0]||'';
+  if(SKIP.test(first)&&isNaN(num(first)))continue;
+  var ty=typeI>=0?(at(row,hdr,typeI)||''):'';
+  if(SKIP.test(ty)||(typeI>=0&&!ty))continue;
+  var val=num(at(row,hdr,pc));if(isNaN(val))continue;
+  cost.forEach(function(ci){var c=num(at(row,hdr,ci));if(!isNaN(c))val+=c});
+  var ds=dateI>=0?(at(row,hdr,dateI)||''):'';
+  if(tradeI>=0){var id=at(row,hdr,tradeI);if(id){var ex=byTrade[id];
+    if(!ex){ex=byTrade[id]={v:val,d:ds};list.push(ex)}else if(/exit|clos/i.test(ty)){ex.d=ds}
+    continue}}
+  list.push({v:val,d:ds});
+ }
+ return {list:list,col:hdr[pc],costs:cost.map(function(i){return hdr[i]}),hdr:hdr};
+}
+function startBalance(rows){
+ // MT5: Deals section, Balance column on the first buy/sell deal = balance before trading
+ for(var i=0;i<rows.length;i++){if(isMarker(rows[i])&&/^deals$/i.test(rows[i].filter(Boolean)[0])){
+  var h=rows[i+1]||[],ti=h.indexOf('Type'),bi=h.indexOf('Balance');if(ti<0||bi<0)return null;
+  for(var r=i+2;r<rows.length&&!isMarker(rows[r]);r++){var row=rows[r];
+   if(/^(buy|sell)$/i.test(at(row,h,ti)||'')){var b=num(at(row,h,bi));return b>0?b:null}}
+ }}
+ return null;
+}
+function extract(rows){
+ var all=rows.map(function(r){return r.join(' ')}).join('\n');
+ var src=/Trade History Report/i.test(all)?'MT5 report':(/Closed Transactions/i.test(all)?'MT4 statement':'');
+ var heads=[];for(var i=0;i<rows.length;i++)if(isHeader(rows[i]))heads.push(i);
+ if(!heads.length)return null;
+ var pick=null;
+ for(var m=0;m<rows.length&&pick===null;m++){
+  if(isMarker(rows[m])&&/^(positions|closed transactions:?|closed trades|closed positions)$/i.test(rows[m].filter(Boolean)[0]))
+   for(var k=0;k<heads.length;k++)if(heads[k]>m){pick=block(rows,heads[k]);break}
+ }
+ if(!pick||!pick.list.length){heads.forEach(function(h){var b=block(rows,h);if(!pick||b.list.length>pick.list.length)pick=b})}
+ if(!pick||!pick.list.length)return null;
+ var H=pick.hdr.join('|');
+ if(!src)src=/trade\s*#/i.test(H)?'TradingView list of trades':(/opening direction|closing direction|closing time/i.test(H)?'cTrader history':'spreadsheet');
+ var dts=parseDates(pick.list.map(function(t){return t.d}));
+ var items=pick.list.map(function(t,i){return {v:t.v,d:dts[i],i:i}});
+ if(items.every(function(t){return t.d}))items.sort(function(a,b){return a.d-b.d||a.i-b.i});
+ return {trades:items.map(function(t){return t.v}),dates:items.map(function(t){return t.d}),src:src,col:pick.col,costs:pick.costs,bal:startBalance(rows)};
+}
+async function readFile(file){
+ var name=(file.name||'').toLowerCase();
+ if(/\.pdf$/.test(name))throw new Error('pdf');
+ if(/\.xls$/.test(name))throw new Error('xls');
+ var buf=await file.arrayBuffer(),b=new Uint8Array(buf),rows;
+ if(b[0]===0x50&&b[1]===0x4B)rows=await xlsxRows(buf);
+ else{var text=decodeText(buf);rows=/<t(able|r)[\s>]/i.test(text)?htmlRows(text):csvRows(text)}
+ return extract(rows);
+}
+
+/* ---------- UI state ---------- */
+var cur=null; // {trades,dates,src,label,isDemo}
+function money(x){var s=Math.abs(x).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});return (x<0?'−':'+')+s}
+function dfmt(d){return d.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}
+function showError(kind){
+ var why={pdf:'PDF reports can’t be read here. Save the report as HTML or Excel instead (steps below).',
+  xls:'Old .xls files can’t be read here. Save as .xlsx, CSV or HTML instead.',
+  'xlsx-unsupported':'Your browser can’t open Excel files. Save the report as HTML or CSV instead, or update your browser.'}[kind]
+  ||'We couldn’t find a list of closed trades with a Profit or P&L column in this file.';
+ $('msg').innerHTML='<div class="warnbox"><strong>Couldn’t read this file.</strong> '+esc(why)+' Here is how to export the right one. Still stuck? Email the file to <b>orfinital@gmail.com</b> and we’ll read it by hand.</div>';
+ $('how').open=true;$('confirm').hidden=true;$('results').hidden=true;
+ showReport(null);
+}
+function rulesSummary(){
+ $('rules-sum').textContent='Challenge rules: $'+(+$('acc').value||0).toLocaleString('en-US')+' account · +'+$('tg').value+'% target · '+$('dl').value+'% daily loss · '+$('ml').value+'% total loss · '+$('days').value+' days · '+$('tpd').value+' trades/day (change)';
+}
+function setData(d){
+ cur=d;var x=d.trades,n=x.length,net=x.reduce(function(a,b){return a+b},0);
+ var dated=d.dates&&d.dates.filter(Boolean),range='';
+ if(dated&&dated.length)range=' from <strong>'+dfmt(dated[0])+'</strong> to <strong>'+dfmt(dated[dated.length-1])+'</strong>';
+ $('cf-src').textContent=d.isDemo?'Example trades (made up)':'Read from: '+d.src;
+ $('cf-text').innerHTML=(d.isDemo?'This example has ':'We found ')+'<strong>'+n+' trades</strong>'+range+', net <strong>'+money(net)+'</strong>.';
+ var notes=[];
+ if(d.col)notes.push('Used the “'+d.col+'” column'+(d.costs&&d.costs.length?' plus '+d.costs.join(' and '):'')+'.');
+ // trades per day from the file's dates
+ if(dated&&dated.length===n&&n>0){var days={};dated.forEach(function(t){var k=t.toDateString();days[k]=(days[k]||0)+1});
+  var tpd=Math.max(1,Math.round(n/Object.keys(days).length));$('tpd').value=tpd;notes.push('Trades per day set to '+tpd+' from your file.')}
+ if(d.bal){$('acc').value=Math.round(d.bal);notes.push('Account size set to '+Math.round(d.bal).toLocaleString('en-US')+' (your balance before the first trade in the file).')}
+ $('rules-note').textContent=notes.join(' ');
+ $('cf-warn').innerHTML=n<20?'<div class="warnbox">That is fewer than 20 trades, too few to say anything. Export a longer period and try again.</div>':(n<100?'<p class="note">Under 100 trades: you will get a rough answer. More trades give a clearer one.</p>':'');
+ $('run').disabled=n<20;
+ rulesSummary();
+ $('msg').innerHTML='';$('results').hidden=true;$('confirm').hidden=false;
+ $('confirm').scrollIntoView({behavior:'smooth',block:'start'});
+}
+async function handle(file){
+ if(!file)return;
+ $('msg').innerHTML='<p class="note">Reading '+esc(file.name)+'…</p>';
+ try{var d=await readFile(file);if(!d||!d.trades.length)return showError('none');d.label=file.name;setData(d)}
+ catch(e){showError(e&&e.message)}
+}
+var drop=$('drop');
+['dragenter','dragover'].forEach(function(ev){drop.addEventListener(ev,function(e){e.preventDefault();drop.classList.add('over')})});
+['dragleave','drop'].forEach(function(ev){drop.addEventListener(ev,function(e){e.preventDefault();drop.classList.remove('over')})});
+drop.addEventListener('drop',function(e){handle(e.dataTransfer&&e.dataTransfer.files[0])});
+window.addEventListener('dragover',function(e){e.preventDefault()});
+window.addEventListener('drop',function(e){e.preventDefault()});
+$('file').addEventListener('change',function(){handle(this.files[0]);this.value=''});
+$('again').addEventListener('click',function(){$('confirm').hidden=true;$('results').hidden=true;$('file').click()});
+$('demo').addEventListener('click',function(){var a=[];for(var i=0;i<60;i++)a.push(Math.random()<0.42?2400:-1000);
+ $('acc').value=100000;$('tpd').value=2;setData({trades:a,dates:null,src:'example',isDemo:true})});
+$('usenums').addEventListener('click',function(){
+ var raw=$('t').value.split(/[\s,;]+/).filter(Boolean).map(Number);
+ if(!raw.length||raw.some(isNaN)){$('msg').innerHTML='<div class="warnbox">Please enter only numbers, one per trade (losses negative).</div>';return}
+ setData({trades:raw,dates:null,src:'numbers you typed'});
+});
+['acc','tg','dl','ml','tpd','days'].forEach(function(id){$(id).addEventListener('input',rulesSummary)});
+
+/* ---------- analysis engine (unchanged method) ---------- */
+function pct(a,p){var s=a.slice().sort(function(x,y){return x-y});return s[Math.min(s.length-1,Math.max(0,Math.floor(p*s.length)))]}
+function mean(a){var s=0;for(var i=0;i<a.length;i++)s+=a[i];return s/a.length}
+function maxDD(a){var e=0,pk=0,dd=0;for(var i=0;i<a.length;i++){e+=a[i];if(e>pk)pk=e;if(pk-e>dd)dd=pk-e}return dd}
+function streak(a){var m=0,c=0;for(var i=0;i<a.length;i++){if(a[i]<0){c++;if(c>m)m=c}else c=0}return m}
+function f(x,d){return (x===null||isNaN(x))?'n/a':x.toFixed(d===undefined?2:d)}
+function run(){
+ if(!cur)return;
+ var x=cur.trades,n=x.length,acc=+$('acc').value||100000,
+  tg=+$('tg').value/100*acc,dl=+$('dl').value/100*acc,
+  ml=+$('ml').value/100*acc,tpd=Math.max(1,Math.round(+$('tpd').value)),
+  days=Math.max(1,Math.round(+$('days').value));
+ var wins=x.filter(function(v){return v>0}).length,gp=0,gl=0;
+ x.forEach(function(v){if(v>0)gp+=v;else gl-=v});
+ var ex=mean(x);
+ // bootstrap range of the average, and luck test (re-centred sample = zero real edge)
+ var B=3000,bm=[],cen=x.map(function(v){return v-ex}),ge=0;
+ for(var b=0;b<B;b++){var s=0,s0=0;for(var i=0;i<n;i++){var k=Math.floor(Math.random()*n);s+=x[k];s0+=cen[k]}
+  bm.push(s/n);if(s0/n>=ex)ge++}
+ var lo=pct(bm,0.025),hi=pct(bm,0.975),pv=ge/B;
+ // challenge simulation
+ var N=5000,pass=0,bd=0,bt=0,to=0;
+ for(var r=0;r<N;r++){
+  var eq=0,res=0;
+  for(var d=0;d<days&&!res;d++){
+   var day=0;
+   for(var j=0;j<tpd;j++){var v=x[Math.floor(Math.random()*n)];day+=v;eq+=v;
+    if(eq<=-ml){res=2;break}
+    if(day<=-dl){res=1;break}
+    if(eq>=tg){res=3;break}}
+  }
+  if(res==3)pass++;else if(res==1)bd++;else if(res==2)bt++;else to++;
+ }
+ var cls=ex<=0?'bad':(pv<0.05?'ok':(pv<0.2?'mid':'bad'));
+ var head=ex<=0?'Easily explained by luck':(pv<0.05?'Hard to explain by luck':(pv<0.2?'Can’t tell yet':'Easily explained by luck'));
+ var why=ex<=0?'These trades lost money on average, so there is no edge to test yet.':
+  (pv<0.05?'A trader with no real edge would rarely get results this good from the same trades. That is not proof it will continue.':
+  (pv<0.2?'This could be skill or luck. More trades will make it clearer.':'A trader with no real edge could get results like these fairly often.'));
+ var p10=Math.round(pass/N*10),passTxt=pass/N<0.05?'You’d pass <strong>fewer than 1 in 10</strong> attempts.':'You’d pass about <strong>'+Math.max(1,p10)+' in 10</strong> attempts.';
+ var fails=[[bd,'the daily loss limit'],[bt,'the total loss limit'],[to,'running out of time (target not reached in '+days+' days)']].sort(function(a,b){return b[0]-a[0]});
+ var failTxt=fails[0][0]>0?' Most likely to fail on: <strong>'+fails[0][1]+'</strong>.':'';
+ var dots='';for(var q=0;q<10;q++)dots+='<i'+(q<(pass/N<0.05?0:Math.max(1,p10))?' class="on"':'')+'></i>';
+ var size=n<100?'Based on only '+n+' trades: treat this as a rough answer, not a fact.':'Based on '+n+' trades. Still only your past.';
+ $('results').innerHTML='<span class="eyebrow">'+(cur.isDemo?'Example result (made-up trades)':'Your result')+'</span>'+
+ '<p class="verdict '+cls+'">'+head+'</p><p>'+why+'</p>'+
+ '<div class="dots" role="img" aria-label="'+(pass/N*100).toFixed(0)+' percent of simulated challenges passed">'+dots+'</div>'+
+ '<p class="pass">'+passTxt+failTxt+'</p>'+
+ '<p class="note">'+size+' Challenge: '+$('tg').value+'% target, '+$('dl').value+'% daily loss, '+$('ml').value+'% total loss, '+days+' days, '+tpd+' trades/day on $'+acc.toLocaleString('en-US')+'.</p>'+
+ '<details><summary>See the numbers</summary><div class="tbl"><table>'+
+ '<tr><th>Trades</th><td>'+n+'</td></tr>'+
+ '<tr><th>Win rate</th><td>'+f(wins/n*100,1)+'%</td></tr>'+
+ '<tr><th>Profit factor</th><td>'+(gl>0?f(gp/gl):'n/a (no losses)')+'</td></tr>'+
+ '<tr><th>Average per trade</th><td>'+f(ex)+'<br><span class="note">95% range '+f(lo)+' to '+f(hi)+'</span></td></tr>'+
+ '<tr><th>Luck test: chance of a result this good with zero real edge</th><td class="'+cls+'">'+f(pv*100,1)+'%</td></tr>'+
+ '<tr><th>Max drawdown in your sample</th><td>'+f(maxDD(x),0)+' ('+f(maxDD(x)/acc*100,1)+'%)</td></tr>'+
+ '<tr><th>Longest losing streak</th><td>'+streak(x)+' trades</td></tr></table></div>'+
+ '<h3 style="margin-top:14px">Simulated challenge</h3><p class="note">'+N+' runs, each drawing random trades from your own list (with replacement).</p><div class="tbl"><table>'+
+ '<tr><th>Hit profit target</th><td>'+f(pass/N*100,1)+'%</td></tr>'+
+ '<tr><th>Broke daily loss limit</th><td>'+f(bd/N*100,1)+'%</td></tr>'+
+ '<tr><th>Broke total loss limit</th><td>'+f(bt/N*100,1)+'%</td></tr>'+
+ '<tr><th>Ran out of time</th><td>'+f(to/N*100,1)+'%</td></tr></table></div></details>'+
+ '<p class="note">Estimates only; re-run for slightly different numbers. Not advice and not a prediction.</p>';
+ $('results').hidden=false;
+ showReport(cur);
+ $('results').scrollIntoView({behavior:'smooth',block:'start'});
+}
+$('run').addEventListener('click',run);
+
+/* ---------- written report request (demand measurement via RC code) ---------- */
+function ref(){var c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789',s='';for(var i=0;i<4;i++)s+=c[Math.floor(Math.random()*c.length)];return 'RC-'+s}
+var lastRef=null,repData=null;
+function buildMsg(){
+ var pr=document.querySelector('input[name=price]:checked'),d=repData,subj='Reality check request '+lastRef;
+ var info=d&&!d.isDemo?d.trades.length+' trades, '+d.src:'file attached';
+ var body=['Hi Orfinity,','','Please send me a written reality check. My trade history file is attached.','',
+  'File: '+info,
+  'Prop firm / challenge: '+($('rq-firm').value.trim()||'not sure yet'),
+  'What the full report would be worth to me: '+(pr?pr.value:'no answer'),'','Ref: '+lastRef].join('\n');
+ $('rq-code').textContent=lastRef;
+ $('rq-msg').textContent='Subject: '+subj+'\n\n'+body;
+ $('rq-mail').href='mailto:orfinital@gmail.com?subject='+encodeURIComponent(subj)+'&body='+encodeURIComponent(body);
+}
+function showReport(d){lastRef=lastRef||ref();repData=d;buildMsg();$('report').hidden=false}
+document.querySelectorAll('input[name=price]').forEach(function(r){r.addEventListener('change',buildMsg)});
+$('rq-firm').addEventListener('input',buildMsg);
+$('rq-copy').addEventListener('click',function(){
+ var t=$('rq-msg').textContent;
+ function sel(){$('rq-msg').parentNode.open=true;var r=document.createRange();r.selectNodeContents($('rq-msg'));var s=window.getSelection();s.removeAllRanges();s.addRange(r);$('rq-copied').textContent='Selected. Copy it with your keyboard or long-press.'}
+ try{navigator.clipboard.writeText(t).then(function(){$('rq-copied').textContent='Copied. Paste it into an email to orfinital@gmail.com and attach your file.'},sel)}catch(e){sel()}
+});
+})();
+</script>
+
+</body></html>
